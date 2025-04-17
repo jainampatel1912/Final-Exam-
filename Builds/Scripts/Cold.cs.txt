@@ -1,0 +1,80 @@
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+using System.Collections;
+
+public class Cold : MonoBehaviour
+{
+    public Slider coldSlider;
+    public float maxCold = 100f;
+    public float coldLossRate = 5f;
+    public float warmUpRate = 10f;
+
+    private float currentCold;
+    private bool isInHeatZone = false;
+    private bool isDead = false;
+
+    private Rigidbody2D rb;
+    private Animator animator;
+    private Player_Movement playerMovement;
+
+    void Start()
+    {
+        currentCold = maxCold;
+        coldSlider.maxValue = maxCold;
+        coldSlider.value = currentCold;
+
+        rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+        playerMovement = GetComponent<Player_Movement>();
+    }
+
+    void Update()
+    {
+        if (isDead) return;
+
+        if (!isInHeatZone)
+        {
+            currentCold -= coldLossRate * Time.deltaTime;
+        }
+        else
+        {
+            currentCold += warmUpRate * Time.deltaTime;
+        }
+
+        currentCold = Mathf.Clamp(currentCold, 0, maxCold);
+        coldSlider.value = currentCold;
+
+        if (currentCold <= 0 && !isDead)
+        {
+            Debug.Log("Player froze!");
+            Dead();
+        }
+    }
+
+    public void SetHeatZone(bool status)
+    {
+        isInHeatZone = status;
+    }
+
+    void Dead()
+    {
+        isDead = true;
+
+        // Disable movement
+        if (playerMovement != null)
+            playerMovement.enabled = false;
+
+        // Trigger death animation
+        animator.SetBool("isDead", true);
+
+        // Wait for animation length before reload
+        StartCoroutine(DeathDelay());
+    }
+
+    private IEnumerator DeathDelay()
+    {
+        yield return new WaitForSeconds(2f); // Adjust based on your animation length
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+}

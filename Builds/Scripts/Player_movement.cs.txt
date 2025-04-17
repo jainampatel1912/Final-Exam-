@@ -1,0 +1,71 @@
+
+using UnityEngine;
+
+public class Player_Movement  : MonoBehaviour
+{
+    public float moveSpeed = 5f;
+    public float jumpForce = 7f;
+    private Rigidbody2D rb;
+    private bool facingRight = false;
+     private Animator animator;
+
+    private bool isGrounded = false;
+    public Transform groundCheck;
+    public LayerMask groundLayer;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+    }
+
+    void Update(){
+        PlayerMove();
+    }
+
+    void PlayerMove(){
+        // CONTROLS
+        float moveX = Input.GetAxis("Horizontal");
+        rb.linearVelocity = new Vector2(moveX * moveSpeed, rb.linearVelocity.y);
+
+        if (Input.GetButtonDown("Jump") && isGrounded){
+            Jump();
+        }
+        //ANIMATION
+        animator.SetFloat("Speed", Mathf.Abs(moveX));
+        animator.SetBool("isGrounded", isGrounded);
+        animator.SetFloat("yVelocity", rb.linearVelocityY);
+
+        //PLAYER DIRECTION
+        if(moveX < 0.0f && facingRight == false){
+            Flip();
+        }
+        else if (moveX > 0.0f && facingRight == true){
+            Flip();
+        }
+    }
+
+    void Flip(){
+        // Player Flip
+        facingRight = !facingRight;
+        Vector2 localScale = gameObject.transform.localScale;
+        localScale.x *= -1;
+        transform.localScale = localScale;
+    }
+
+    void Jump(){
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+            isGrounded = true;
+    }
+
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+            isGrounded = false;
+    }
+}
